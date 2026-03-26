@@ -1,6 +1,7 @@
 import express from "express"
 import protectRoute from "../middleware/protectRoute.js"
 import { createPost,deletePost,createComment,likeUnlikePost,getAllPost,getLikedPosts,getFollowingPosts,getUserPosts } from "../controllers/postController.js"
+import { restrictTo } from "../middleware/restrictTo.js"
 
 const router = express.Router()
 

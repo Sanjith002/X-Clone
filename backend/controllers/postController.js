@@ -40,15 +40,17 @@ const deletePost = async (req,res) => {
         if(!post){
             return res.status(404).json({error: "Post not found"})
         }
-        if(post.user.toString() !== req.user._id.toString()){
-            return res.status(401).json({error: "You are not authorized to delete this post"})
-        }
-        if(post.img){
+
+        if(req.user.role === "admin" || post.user.toString() === req.user._id.toString()){
+            if(post.img){
             const imgId = post.img.split("/").pop().split('.')[0]
             await cloudinary.uploader.destroy(imgId)
         }
         await Post.findByIdAndDelete({_id: id})
         res.status(200).json({message: "Post deleted successfully"})
+        }else{
+            return res.status(403).json({error: "You are not authorized to delete this post"})
+        }
     }catch(err){
         console.log(`Error in delete post controller : ${err}`)
         res.status(500).json({error : "Internal Server Error"})

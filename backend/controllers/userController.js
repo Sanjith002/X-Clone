@@ -57,21 +57,25 @@ const getSuggestedUsers = async (req,res) => {
     try{
         const userId = req.user._id
         const user = await User.findById({_id: userId}).select("-password")
-        const randomUsers = await User.aggregate([
+        const suggestedUsers = await User.aggregate([
             {
                 $match : {
-                    _id : {$ne: userId}
+                    _id : {
+                        $ne: userId,
+                        $nin: user.following || []
+                    }
                 }
             },{
                 $sample : {
-                    size: 10
+                    size: 8
+                }
+            },{
+                $project : {
+                    password: 0
                 }
             }
         ])
-        const fillteredUsers = randomUsers.filter((u) => !user.following.includes(u._id))
-        const suggestedUsers = fillteredUsers.slice(0,4)
-        suggestedUsers.forEach((user) => (user.password = null))
-        res.status(200).json(suggestedUsers)
+        res.status(200).json(suggestedUsers);
     }catch(err){
         console.log(`Error in getSuggestedUsers controller: ${err}`)
         res.status(500).json({error: "Internal server error"})

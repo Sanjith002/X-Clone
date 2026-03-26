@@ -30,20 +30,23 @@ const signup = async (req,res) => {
         })
 
         if(newUser){
-            generateToken(newUser._id, res)
             await newUser.save()
+            const token = generateToken(newUser)
             res.status(201).json({
-                id: newUser._id,
-                userName: newUser.userName,
-                fullName: newUser.fullName,
-                email: newUser.email,
-                password: newUser.password,
-                followers: newUser.followers,
-                following: newUser.following,
-                profileImg: newUser.profileImg,
-                coverImg: newUser.coverImg,
-                bio: newUser.bio,
-                link: newUser.link
+                token,
+                user: {
+                    id: newUser._id,
+                    userName: newUser.userName,
+                    fullName: newUser.fullName,
+                    email: newUser.email,
+                    role: newUser.role,
+                    followers: newUser.followers,
+                    following: newUser.following,
+                    profileImg: newUser.profileImg,
+                    coverImg: newUser.coverImg,
+                    bio: newUser.bio,
+                    link: newUser.link
+                }
             })
         }else{
             res.status(400).json({error: "Invalid user data"})
@@ -60,23 +63,30 @@ const login = async (req,res) => {
         const user = await User.findOne({userName})
         const isPasswordCorrect = await bcrypt.compare(password, user?.password || "")
 
-        if(!user || !isPasswordCorrect){
-            return res.status(400).json({error: "Invalid username or password"})
+        if(!user){
+            return res.status(400).json({error: "Invalid username"})
         }
-        generateToken(user._id, res)
+
+        if(!isPasswordCorrect){
+            return res.status(400).json({error: "Invalid password"})
+        }
+        const token = generateToken(user)
 
         res.status(200).json({
-            id: user._id,
-            userName: user.userName,
-            fullName: user.fullName,
-            email: user.email,
-            password: user.password,
-            followers: user.followers,
-            following: user.following,
-            profileImg: user.profileImg,
-            coverImg: user.coverImg,
-            bio: user.bio,
-            link: user.link
+            token,
+            user: {
+                id: user._id,
+                userName: user.userName,
+                fullName: user.fullName,
+                email: user.email,
+                role: user.role,
+                followers: user.followers,
+                following: user.following,
+                profileImg: user.profileImg,
+                coverImg: user.coverImg,
+                bio: user.bio,
+                link: user.link
+            }
         })
 
     }catch(err){
@@ -87,7 +97,6 @@ const login = async (req,res) => {
 
 const logout = async (req,res) => {
     try{
-        res.cookie("jwt", "" , {maxAge : 0})
         res.status(200).json({message : "Logout Successfully"})
     }catch(err){
         console.log(`Error in logout controller : ${err}`)
